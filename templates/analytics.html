@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Sentinel - Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2 class="mb-4"><i class="bi bi-graph-up text-primary me-2"></i> Analytics</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group">
+            <a href="http://localhost:8501" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
+            </a>
+            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('analyticsFrame').contentWindow.location.reload();">
+                <i class="bi bi-arrow-repeat me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-card p-3">
+    <iframe id="analyticsFrame" src="http://localhost:8501" class="analytics-frame"></iframe>
+</div>
+
+<div class="text-center text-muted mt-3">
+    <small>Powered by Streamlit | If the analytics dashboard doesn't load, make sure the Streamlit server is running</small>
+    <div class="mt-2">
+        <code>python -m streamlit run analytics_app.py</code>
+    </div>
+</div>
+{% endblock %} 

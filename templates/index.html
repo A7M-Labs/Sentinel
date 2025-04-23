@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Sentinel - Security Event Detection{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="text-center mb-5">
+            <h1 class="display-3 fw-bold mb-3">
+                <i class="bi bi-shield-lock-fill text-primary me-3"></i>SENTINEL
+            </h1>
+            <p class="lead">Real-time security event detection system</p>
+        </div>
+        
+        <div class="row g-4 mt-4">
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 h-100">
+                    <h3 class="mb-3"><i class="bi bi-grid-1x2-fill text-primary me-2"></i> Dashboard</h3>
+                    <p>View system status, active camera feeds, and recent alerts in a comprehensive dashboard.</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-right-circle me-2"></i> Go to Dashboard
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 h-100">
+                    <h3 class="mb-3"><i class="bi bi-camera-video-fill text-primary me-2"></i> Video Monitoring</h3>
+                    <p>Access multi-camera views with playback controls and advanced event detection visualization.</p>
+                    <a href="{{ url_for('monitoring') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-right-circle me-2"></i> View Cameras
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 h-100">
+                    <h3 class="mb-3"><i class="bi bi-exclamation-triangle-fill text-primary me-2"></i> Alerts</h3>
+                    <p>Review and manage detected security events with timestamps and confidence scores.</p>
+                    <a href="{{ url_for('alerts') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-right-circle me-2"></i> Check Alerts
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 h-100">
+                    <h3 class="mb-3"><i class="bi bi-graph-up text-primary me-2"></i> Analytics</h3>
+                    <p>Visualize security event patterns and system performance with interactive data analytics.</p>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-right-circle me-2"></i> View Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <p class="text-muted">Sentinel © 2023 | Powered by Flask and Streamlit</p>
+        </div>
+    </div>
+</div>
+{% endblock %} 
