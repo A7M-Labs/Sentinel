@@ -17,8 +17,8 @@ from ultralytics import YOLO
 
 @dataclass(slots=True)
 class Config:
-    api_key   : str = "tlk_1G36X5Q1KS4J5B26BPP8H2WJ2BHR"
-    index_id  : str = "6808c0d802327bef162a43b8"
+    api_key   : str = ""
+    index_id  : str = ""
     videos    : dict[str,str] = field(default_factory=lambda: {
         "normal1.mp4": "68088a3c352908d3bc50a428",
         "normal2.mp4": "68088a3c352908d3bc50a429",
