@@ -4,6 +4,7 @@ TLSearchAPI/index_id.txt
 TLSearchAPI/index.py
 TLSearchAPI/*.env
 TLSearchAPI/processing_stats.db
+TLSearchAPI/processor.py
 
 # Virtual Environment contents.
 sentinel-venv/
