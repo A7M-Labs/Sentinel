@@ -7,6 +7,9 @@
     <img src="https://img.shields.io/github/issues-pr/A7M-Labs/Sentinel" alt="Pull Requests">
 </p>
 
+# 🚧 INDEV 🚧
+- All elements of the program are currently split across branches for isolated development on each factor of the finished product. All the branches will be merged when the project is completed and ready for production use. 
+
 ## 📌 What is it?
 - Sentinel is a real-time security event detection system powered by TwelveLabs' intelligent video understanding API. This proof-of-concept processes video feeds (webcam or pre-recorded) to detect security-relevant events such as unauthorized entries, unattended objects, or suspicious behavior — all with low latency and a minimal web interface for alerts and monitoring.
 
