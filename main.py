@@ -24,7 +24,7 @@ def cast(t):
     return t.to(device, dtype=torch.float16 if FLOAT16 else torch.float32)
 
 VIDEO_DIR = Path("./videos")
-YOLO_WEIGHTS = "yolov8l.pt"
+YOLO_WEIGHTS = "yolov8n.pt"
 LABELS = [
     "person", "man", "woman", "child", "baby", "teenager", "adult", "elderly person",
     "group of people", "couple", "family", "crowd", "solo person",
@@ -47,8 +47,8 @@ LABELS = [
     "person jumping", "person dancing", "person skipping", "person hopping",
     "person climbing", "person descending stairs", "person riding bicycle",
     "person riding motorcycle", "person in wheelchair", "person pushing stroller",
-    "person pushing wheelchair", "person pushing cart", "person pulling cart",
-    "person holding phone", "person texting", "person calling on phone",
+    "person pushing wheelchair", "person pushing cart", "person pushing wheelchair",
+    "person pulling cart", "person holding phone", "person texting", "person calling on phone",
     "person taking photo", "person recording video", "person waving hand",
     "person pointing", "person clapping", "person giving thumbs up",
     "person giving thumbs down", "person shaking hands", "person folding arms",
@@ -104,12 +104,17 @@ YOLO_CONF = 0.25
 ENTRANCE = [(0,360),(300,360),(300,480),(0,480)]
 
 @st.cache_resource(show_spinner=True)
-def load_models_and_text():
+def load_detector():
     yolo = YOLO(YOLO_WEIGHTS)
     yolo.fuse()
+    yolo.model.model = torch.quantization.quantize_dynamic(
+        yolo.model.model,
+        {torch.nn.Conv2d},
+        dtype=torch.qint8
+    )
+    yolo.args.imgsz = 320
     clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-    clip_proc  = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-
+    clip_proc = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
     tokenizer = clip_proc.tokenizer
     txt = tokenizer(LABELS, padding=True, return_tensors="pt").to(device)
     with torch.no_grad():
@@ -117,25 +122,28 @@ def load_models_and_text():
         text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)
     return yolo, clip_model, clip_proc, text_emb
 
-yolo, clip_model, clip_proc, TEXT_EMBEDS = load_models_and_text()
+yolo, clip_model, clip_proc, TEXT_EMBEDS = load_detector()
 tracker = DeepSort(max_age=30)
 
 class AVThread:
     def __init__(self, path):
         self.cap = cv2.VideoCapture(str(path), cv2.CAP_AVFOUNDATION)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,1)
-        self.q   = deque(maxlen=120)
-        self.stop=False
-        threading.Thread(target=self._loop,daemon=True).start()
+        self.q = deque(maxlen=120)
+        self.stop = False
+        threading.Thread(target=self._loop, daemon=True).start()
     def _loop(self):
         while not self.stop:
-            ret,frm=self.cap.read()
-            if not ret: self.stop=True; break
+            ret, frm = self.cap.read()
+            if not ret:
+                self.stop = True
+                break
             self.q.append(frm)
     def read(self):
         return self.q.popleft() if self.q else None
     def release(self):
-        self.stop=True; self.cap.release()
+        self.stop = True
+        self.cap.release()
 
 @torch.no_grad()
 def classify(crop_bgr):
@@ -147,54 +155,62 @@ def classify(crop_bgr):
     top = sims.topk(TOP_K)
     return [(LABELS[i], sims[i].item()) for i in top.indices]
 
-st.title("📹 Smart Video Monitor – Apple Silicon")
+st.title("📹 Smart Video Monitor – Apple Silicon")
 
-vids=[p.name for p in VIDEO_DIR.glob("*.mp4")]
+vids = [p.name for p in VIDEO_DIR.glob("*.mp4")]
 if not vids:
     st.error("Put MP4s in ./videos")
     st.stop()
-name=st.selectbox("Video",vids)
-if not st.button("▶️ Run"):
+name = st.selectbox("Video", vids)
+if not st.button("▶️ Run"):
     st.stop()
 
-cap=AVThread(VIDEO_DIR/name); poly=np.array(ENTRANCE)
-frame_ph,occ_ph=st.empty(),st.empty(); class_box=st.container()
-occ=0; prev_in={}
+cap = AVThread(VIDEO_DIR/name)
+poly = np.array(ENTRANCE)
+frame_ph, occ_ph = st.empty(), st.empty()
+class_box = st.container()
+occ = 0
+prev_in = {}
 
 while True:
-    frame=cap.read()
+    frame = cap.read()
     if frame is None:
-        if cap.stop: break
-        time.sleep(0.01); continue
-    if int(cap.cap.get(cv2.CAP_PROP_POS_FRAMES))%3==0:
-        detections=[]
-        result=yolo(frame,classes=[0],conf=YOLO_CONF,verbose=False)[0]
-        for box,conf in zip(result.boxes.xyxy,result.boxes.conf):
-            x1,y1,x2,y2=map(int,box); crop=frame[y1:y2,x1:x2]
-            labels=classify(crop)
-            detections.append(((x1,y1,x2,y2),conf.item(),labels[0]))
-        track_in=[[ [x1,y1,x2-x1,y2-y1],c,0] for (x1,y1,x2,y2),c,_ in detections]
-        tracks=tracker.update_tracks(track_in,frame=frame)
+        if cap.stop:
+            break
+        time.sleep(0.01)
+        continue
+    if int(cap.cap.get(cv2.CAP_PROP_POS_FRAMES)) % 3 == 0:
+        detections = []
+        result = yolo(frame, classes=[0], conf=YOLO_CONF, verbose=False)[0]
+        for box, conf in zip(result.boxes.xyxy, result.boxes.conf):
+            x1, y1, x2, y2 = map(int, box)
+            crop = frame[y1:y2, x1:x2]
+            labels = classify(crop)
+            detections.append(((x1, y1, x2, y2), conf.item(), labels[0]))
+        track_in = [[[x1, y1, x2-x1, y2-y1], c, 0] for (x1, y1, x2, y2), c, _ in detections]
+        tracks = tracker.update_tracks(track_in, frame=frame)
     else:
-        detections=[]; tracks=[]
-    for det,t in zip(detections, tracks):
-        if not t.is_confirmed(): continue
-        (x1,y1,x2,y2),conf,(lbl,sc)=det
-        cx,cy=int((x1+x2)/2),int((y1+y2)/2)
-        inside=cv2.pointPolygonTest(poly,(cx,cy),False)>=0
-        if prev_in.get(t.track_id,False)!=inside:
-            occ+=1 if inside else -1; occ=max(0,occ)
-        prev_in[t.track_id]=inside
-        cv2.rectangle(frame,(x1,y1),(x2,y2),(0,255,0),2)
-        cv2.putText(frame,f"{lbl} {sc:.2f}",(x1,y1-6),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),1)
-    cv2.polylines(frame,[poly],True,(255,0,0),2)
-    cv2.putText(frame,f"Occupancy: {occ}",(10,30),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),2)
-    frame_ph.image(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB),channels="RGB")
-    occ_ph.metric("Occupancy",occ)
-
+        detections = []
+        tracks = []
+    for det, t in zip(detections, tracks):
+        if not t.is_confirmed():
+            continue
+        (x1, y1, x2, y2), conf, (lbl, sc) = det
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        inside = cv2.pointPolygonTest(poly, (cx, cy), False) >= 0
+        if prev_in.get(t.track_id, False) != inside:
+            occ += 1 if inside else -1
+            occ = max(0, occ)
+        prev_in[t.track_id] = inside
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
+        cv2.putText(frame, f"{lbl} {sc:.2f}", (x1, y1-6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
+    cv2.polylines(frame, [poly], True, (255,0,0), 2)
+    cv2.putText(frame, f"Occupancy: {occ}", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+    frame_ph.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB")
+    occ_ph.metric("Occupancy", occ)
     with class_box:
         st.markdown("### Recent labels")
-        for _,_,(lbl,sc) in detections[:10]:
+        for _, _, (lbl, sc) in detections[:10]:
             st.write(f"{lbl} ({sc:.2f})")
-
-cap.release(); st.success("Done ✔️")
+cap.release()
+st.success("Done ✔️")
