@@ -17,8 +17,8 @@ from ultralytics import YOLO
 
 @dataclass(slots=True)
 class Config:
-    api_key   : str = ""
-    index_id  : str = ""
+    api_key   : str = "tlk_1G36X5Q1KS4J5B26BPP8H2WJ2BHR"
+    index_id  : str = "6808c0d802327bef162a43b8"
     videos    : dict[str,str] = field(default_factory=lambda: {
         "normal1.mp4": "68088a3c352908d3bc50a428",
         "normal2.mp4": "68088a3c352908d3bc50a429",
@@ -26,10 +26,52 @@ class Config:
         "rob1.mp4"   : "68088a3c352908d3bc50a42d",
         "rob2.mp4"   : "68088a3c352908d3bc50a42e",
     })
+    # TwelveLabs text prompts for each high‑level event label
     queries    : dict[str,str] = field(default_factory=lambda:{
-        "Restricted-zone breach": "person walking",
-        "Unattended package"   : "bag left alone",
-        "Suspicious behavior"  : "person running then leaving quickly",
+        # Person breaches an off‑limits area
+        "Restricted-zone breach": (
+            "person entering restricted area OR "
+            "person crossing security line OR "
+            "intruder climbing fence"
+        ),
+        # Abandoned or unattended bag/box/parcel
+        "Unattended package": (
+            "bag left alone OR "
+            "suitcase left unattended OR "
+            "backpack abandoned OR "
+            "package or box left on floor"
+        ),
+        # Potentially suspicious human behaviour
+        "Suspicious behavior": (
+            "person running then leaving quickly OR "
+            "person stealing item OR "
+            "person looking around nervously OR "
+            "person loitering near entrance"
+        ),
+        # Explicit weapon presence
+        "Weapon detected": (
+            "person holding gun OR knife OR weapon OR "
+            "firearm visible in hand OR "
+            "blade brandished"
+        ),
+        # Fire, smoke, or flame detection
+        "Fire or smoke": (
+            "visible flames OR "
+            "smoke rising OR "
+            "fire in scene"
+        ),
+        # Physical altercation / fighting
+        "Fighting": (
+            "people fighting OR "
+            "violent altercation OR "
+            "person punching another"
+        ),
+        # Property damage or vandalism
+        "Vandalism": (
+            "person spray painting wall OR "
+            "breaking window OR "
+            "smashing object"
+        )
     })
     segment_sec: int = 5
     grab_fps   : int = 15
@@ -38,9 +80,12 @@ class Config:
     videos_path: Path = Path(__file__).parent / "videos"
     db_path    : Path = Path(__file__).with_suffix(".events.db")
 
-CFG = Config(); CFG.tmp_dir.mkdir(exist_ok=True)
 
+# Instantiate global config and client immediately after Config class definition
+CFG = Config()  # ← create a global config instance
 client = TwelveLabs(api_key=CFG.api_key)
+
+
 
 _db = sqlite3.connect(CFG.db_path, check_same_thread=False)
 _db.execute("PRAGMA journal_mode=WAL")
@@ -156,17 +201,28 @@ class TLJob:
     def start(self): self.fut=EXEC.submit(self._run); return self
     def _run(self):
         try:
-            task=client.task.create(index_id=self.index_id,file=str(self.clip)); task.wait_for_done(sleep_interval=2)
-            if task.status!="ready": return []
-            res=client.search.query(index_id=self.index_id,query_text=self.query,options=["visual"],group_by="video")
-            vid=task.video_id; hits=[]
+            task = client.task.create(index_id=self.index_id, file=str(self.clip))
+            task.wait_for_done(sleep_interval=0.7)
+            if task.status != "ready":
+                return []
+            res = client.search.query(index_id=self.index_id, query_text=self.query, options=["visual"], group_by="video")
+            vid = task.video_id
+            hits = []
             for g in res.data.root:
                 for c in g.clips.root:
-                    if c.video_id==vid: hits.append((c.start,c.end,c.score,c.confidence))
+                    if c.video_id == vid:
+                        hits.append((c.start, c.end, c.score, c.confidence))
+            # Print every result to the console
+            if hits:
+                print(f"✅ TL match for “{self.query}” →", hits)
+            else:
+                print(f"❌ No TL match for “{self.query}”")
             return hits
-        except (BadRequestError,RateLimitError) as e:
-            print("⚠️ TL:",e); return []
-        finally: self.clip.unlink(missing_ok=True)
+        except (BadRequestError, RateLimitError) as e:
+            print("⚠️ TL:", e)
+            return []
+        finally:
+            self.clip.unlink(missing_ok=True)
 
 def make_mask(frame, pts):
     m=np.zeros(frame.shape[:2],np.uint8)
@@ -263,6 +319,9 @@ def main():
                 if hits:
                     for s, e, sc, cf in hits:
                         record_event(job.query, sc, cf, s, e)
+                        success_msg = f"{job.parent_label}: ✅ {job.query} ({sc:.2f})"
+                        ph_e.success(success_msg)
+                        st.toast(success_msg, icon="✅")
                 else:
                     fail_msg = f"{job.parent_label}: ❌ {job.query}"
                     ph_e.error(fail_msg)
