@@ -16,7 +16,7 @@
 > [Description](#what-is-it)<br>
 > [Features](#features)<br>
 > [Usage](#installation-and-usage)<br>
-> [Tech Stack](#tech-stack)
+> [Tech Stack](#tech-stack)<br>
 > [Credits](#credits)<br>
 > [License](#license)<br>
 > [Understanding Commits](#commits-key)<br>
