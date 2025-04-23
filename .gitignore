@@ -1,0 +1,9 @@
+# TwelveLabs Search API testing material and keygen tools.
+TLSearchAPI/videos
+TLSearchAPI/index_id.txt
+TLSearchAPI/index.py
+TLSearchAPI/*.env
+TLSearchAPI/processing_stats.db
+
+# Virtual Environment contents.
+sentinel-venv/
