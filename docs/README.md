@@ -6,7 +6,9 @@ Welcome to the Sentinel documentation. This guide will help you understand, inst
 - [Getting Started](getting-started.md)
 - [API Reference](api-reference.md)
 - [Configuration Guide](configuration.md)
-- [Troubleshooting](troubleshooting.md)
+- [Methodology](methodology.md)
+- [Optimization Report](optimization.md)
+- [Benchmark Results](benchmarks.md)
 - [Limitations & Challenges](limitations.md)
 
 ## Quick Links
