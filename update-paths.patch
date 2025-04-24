@@ -1,0 +1,20 @@
+--- a/main.py
++++ b/main.py
+@@ class Config:
+-    tmp_dir    : Path = Path(tempfile.gettempdir()) / "tl_segments"
++    tmp_dir    : Path = Path(__file__).parent / "tmp" / "segments"
+@@ class Config:
+-    db_path    : Path = Path(__file__).with_suffix(".events.db")
++    db_path    : Path = Path(__file__).parent / "databases" / "events" / "events.db"
+@@ def __post_init__(self):
+-        self.tmp_dir.mkdir(parents=True, exist_ok=True)
++        self.tmp_dir.mkdir(parents=True, exist_ok=True)
++        # ensure the events-DB folder exists
++        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+@@ @functools.lru_cache(1)
+-def load_yolo() -> YOLO:
+-    model = YOLO("yolov8n.pt")
++def load_yolo() -> YOLO:
++    # point at our models/yolo folder
++    model_path = Path(__file__).parent / "models" / "yolo" / "yolov8n.pt"
++    model = YOLO(str(model_path))

@@ -144,14 +144,19 @@ class Config:
     segment_sec: int = 5
     grab_fps   : int = 15
     max_workers: int = 3
-    tmp_dir    : Path = Path(tempfile.gettempdir()) / "tl_segments"
+    tmp_dir    : Path = Path(__file__).parent / "tmp" / "segments"
     videos_path: Path = Path(__file__).parent / "videos"
-    db_path    : Path = Path(__file__).with_suffix(".events.db")
+    db_path    : Path = Path(__file__).parent / "databases" / "events" / "events.db"
+
     def __post_init__(self):
+        # create tmp segments folder
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
+        # ensure the events database folder exists
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
 CFG = Config()
 client = TwelveLabs(api_key=CFG.api_key)
+
 _db = sqlite3.connect(CFG.db_path, check_same_thread=False)
 _db.execute("PRAGMA journal_mode=WAL")
 _db.execute("""
@@ -166,6 +171,7 @@ CREATE TABLE IF NOT EXISTS events(
 )
 """)
 _db.commit()
+
 def record_event(label: str, score: float, confidence: float, start: float, end: float):
     _db.execute(
         "INSERT INTO events VALUES(NULL, datetime('now'), ?, ?, ?, ?, ?)",
@@ -194,6 +200,7 @@ class RateLimiter:
 
 RL = RateLimiter()
 last_hash: collections.deque[str] = collections.deque(maxlen=20)
+
 def clip_changed(frames: List[np.ndarray], mask: np.ndarray | None) -> bool:
     h = hashlib.blake2s()
     for f in frames:
@@ -213,7 +220,9 @@ def clip_changed(frames: List[np.ndarray], mask: np.ndarray | None) -> bool:
 
 @functools.lru_cache(1)
 def load_yolo() -> YOLO:
-    model = YOLO("yolov8n.pt")
+    # load from models/yolo
+    model_path = Path(__file__).parent / "models" / "yolo" / "yolov8n.pt"
+    model = YOLO(str(model_path))
     if torch.cuda.is_available():
         model.to("cuda")
     model.fuse()
@@ -298,6 +307,7 @@ COMPOSITE_QUERIES = {
 }
 
 EXEC = ThreadPoolExecutor(max_workers=CFG.max_workers)
+
 def try_delete(path: Path, retries: int = 3, delay: float = 0.5):
     for _ in range(retries):
         try:

@@ -14,7 +14,7 @@ if not api_key:
 client = TwelveLabs(api_key=api_key)
 
 index = client.index.create(
-    name="k;qefpwpqjofopqpowfoqwfjiqwf",
+    name="k;sadasdasdasdasd",
     models=[
         { "name": "marengo2.7", "options": ["visual", "audio"] }
     ]
