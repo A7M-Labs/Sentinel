@@ -6,7 +6,7 @@ from twelvelabs import TwelveLabs
 load_dotenv()
 
 # Get the API key from the environment variable
-api_key = "tlk_1G36X5Q1KS4J5B26BPP8H2WJ2BHR"
+api_key = ""
 
 if not api_key:
     raise ValueError("TWELVELABS_API_KEY not found in environment variables.")
