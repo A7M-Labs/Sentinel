@@ -9,12 +9,13 @@
    ```bash
    git clone https://github.com/A7M-Labs/Sentinel.git
    cd Sentinel
+   git checkout backend
    ```
 
 2. Set up environment
    ```bash
    python -m venv sentinel-venv
-   source sentinel-venv/bin/activate  # Linux/MacOS
+   source sentinel-venv/bin/activate
    pip install -r requirements.txt
    ```
 
