@@ -17,8 +17,8 @@ from core.db import record_event
 
 
 def main():
-    st.set_page_config("Security Demo", "🛡️", layout="wide")
-    st.title("⚡ Real-Time Security Detection (w/ YOLO boxes)")
+    st.set_page_config("Security Demo", layout="wide")
+    st.title("Real-Time Security Detection")
     with st.sidebar:
         st.write("add(3,4) =", add(3,4))
         src_sel = st.selectbox("Source", ["Webcam"] + list(CFG.videos))
