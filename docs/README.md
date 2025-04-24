@@ -10,6 +10,7 @@ Welcome to the Sentinel documentation. This guide will help you understand, inst
 - [Optimization Report](optimization.md)
 - [Benchmark Results](benchmarks.md)
 - [Limitations & Challenges](limitations.md)
+- [Issues](issues.md)
 
 ## Quick Links
 - [GitHub Repository](https://github.com/A7M-Labs/Sentinel)
