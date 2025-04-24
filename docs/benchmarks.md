@@ -53,4 +53,4 @@
 
 ---
 
-*Benchmarks were measured on a workstation with a 6‑core Intel i7 CPU, 16 GB RAM, and an NVIDIA GTX GPU. Actual results may vary by hardware.*
+*Benchmarks were measured on a workstation with a 6‑core Intel i7 CPU, 32 GB RAM, and an NVIDIA RTX GPU. Actual results may vary by hardware.*
