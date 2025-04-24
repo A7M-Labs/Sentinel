@@ -81,7 +81,7 @@
 ## Future Improvements
 
 ### Planned Enhancements
-- [ ] Implement local frame caching  
+- [ ] Implement local frame caching (global already exists) 
 - [ ] Add request rate–limiting queue  
 - [ ] Optimize frame preprocessing pipeline  
 - [ ] Add fallback detection methods  
