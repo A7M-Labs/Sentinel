@@ -2,11 +2,14 @@
 
 Welcome to the Sentinel documentation. This guide will help you understand, install, and use Sentinel effectively.
 
+UI Images/Clips are avaliable in the [images](images) directory!
+
 ## Contents
 - [Getting Started](getting-started.md)
 - [API Reference](api-reference.md)
 - [Configuration Guide](configuration.md)
 - [Methodology](methodology.md)
+- [TwelveLabs](twelvelabs.md)
 - [Optimization Report](optimization.md)
 - [Benchmark Results](benchmarks.md)
 - [Limitations & Challenges](limitations.md)
