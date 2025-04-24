@@ -32,10 +32,39 @@
 
 ## Directory Structure
 ```
-sentinel/
-├── frontend/        # React frontend application
-├── backend/         # Python backend services
-├── models/          # ML models and configurations
-├── utils/          # Utility functions and helpers
-└── config/         # Configuration files
+Sentinel/
+├── .env
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── main.py
+├── keyregen.py
+├── core/
+│   ├── asm_funcs.py
+│   ├── config.py
+│   ├── db.py
+│   ├── detector.py
+│   ├── jobs.py
+│   ├── pipeline.py
+│   └── utils.py
+├── databases/
+│   ├── events/
+│   │   └── events.db
+│   └── security/
+│       ├── security_system.db
+│       └── security_stats.db
+├── videos/
+│   ├── normal1.mp4
+│   ├── normal2.mp4
+│   ├── normal3.mp4
+│   └── … 
+├── models/
+│   └── yolo/
+│       ├── yolov8n.pt
+│       └── yolov8l.pt
+├── tmp/
+│   └── segments/
+└── archive/
+    └── TLSearchAPI/
+        └── search.py
 ```
