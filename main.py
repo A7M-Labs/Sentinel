@@ -17,56 +17,53 @@ from ultralytics import YOLO
 
 @dataclass(slots=True)
 class Config:
-    api_key   : str = ""
-    index_id  : str = ""
+    api_key   : str = "tlk_1G36X5Q1KS4J5B26BPP8H2WJ2BHR"
+    index_id  : str = "6808c0d802327bef162a43b8"
     videos    : dict[str,str] = field(default_factory=lambda: {
         "normal1.mp4": "68088a3c352908d3bc50a428",
         "normal2.mp4": "68088a3c352908d3bc50a429",
         "normal3.mp4": "68088a3c352908d3bc50a42a",
         "rob1.mp4"   : "68088a3c352908d3bc50a42d",
         "rob2.mp4"   : "68088a3c352908d3bc50a42e",
+        "normal4.mp4":"6808a21a352908d3bc50a45b",
+        "normal5.mp4":"6808a26c02327bef162a41a8",
+        "rob3.mp4":"6808a33702327bef162a41af",
+        "rob4.mp4":"6808a37d669d2e9f3f513bc5",
+        "rob5.mp4":"6808a49f669d2e9f3f513bda",
     })
-    # TwelveLabs text prompts for each high‑level event label
     queries    : dict[str,str] = field(default_factory=lambda:{
-        # Person breaches an off‑limits area
         "Restricted-zone breach": (
             "person entering restricted area OR "
             "person crossing security line OR "
             "intruder climbing fence"
         ),
-        # Abandoned or unattended bag/box/parcel
         "Unattended package": (
             "bag left alone OR "
             "suitcase left unattended OR "
             "backpack abandoned OR "
             "package or box left on floor"
         ),
-        # Potentially suspicious human behaviour
         "Suspicious behavior": (
             "person running then leaving quickly OR "
             "person stealing item OR "
             "person looking around nervously OR "
             "person loitering near entrance"
         ),
-        # Explicit weapon presence
         "Weapon detected": (
             "person holding gun OR knife OR weapon OR "
             "firearm visible in hand OR "
             "blade brandished"
         ),
-        # Fire, smoke, or flame detection
         "Fire or smoke": (
             "visible flames OR "
             "smoke rising OR "
             "fire in scene"
         ),
-        # Physical altercation / fighting
         "Fighting": (
             "people fighting OR "
             "violent altercation OR "
             "person punching another"
         ),
-        # Property damage or vandalism
         "Vandalism": (
             "person spray painting wall OR "
             "breaking window OR "
@@ -81,8 +78,7 @@ class Config:
     db_path    : Path = Path(__file__).with_suffix(".events.db")
 
 
-# Instantiate global config and client immediately after Config class definition
-CFG = Config()  # ← create a global config instance
+CFG = Config()
 client = TwelveLabs(api_key=CFG.api_key)
 
 
@@ -101,7 +97,6 @@ def load_yolo(): return YOLO("yolov8n.pt")
 
 def detect_person(frame: np.ndarray
                   ) -> list[Tuple[int,int,int,int]]:
-    """Return list of person bounding‑boxes over the whole frame."""
     model = load_yolo()
     res = model.predict(frame, conf=0.5, classes=[0], verbose=False) 
     boxes=[]
@@ -210,9 +205,18 @@ class TLJob:
             hits = []
             for g in res.data.root:
                 for c in g.clips.root:
-                    if c.video_id == vid:
-                        hits.append((c.start, c.end, c.score, c.confidence))
-            # Print every result to the console
+                    if c.video_id != vid:
+                        continue
+                    try:
+                        sc = float(c.score)
+                        cf = float(c.confidence)
+                    except (ValueError, TypeError):
+                        continue
+                    hits.append((c.start, c.end, sc, cf))
+            print(f"Raw TL hits for “{self.query}”: ", hits)
+            score_th, conf_th = 0.5, 0.5
+            print(f"Applying TL thresholds: score ≥ {score_th}, confidence ≥ {conf_th}")
+            hits = [h for h in hits if h[2] >= score_th and h[3] >= conf_th]
             if hits:
                 print(f"✅ TL match for “{self.query}” →", hits)
             else:
